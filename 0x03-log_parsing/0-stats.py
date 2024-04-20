@@ -1,40 +1,62 @@
 #!/usr/bin/python3
-"""Performs log parsing from stdin"""
+"""Implement Log parsing Algorithm"""
 
 import re
 import sys
-counter = 0
-file_size = 0
-statusC_counter = {200: 0, 301: 0, 400: 0,
-                   401: 0, 403: 0, 404: 0, 405: 0, 500: 0}
 
 
-def printCodes(dict, file_s):
-    """Prints the status code and the number of times they appear"""
-    print("File size: {}".format(file_s))
-    for key in sorted(dict.keys()):
-        if statusC_counter[key] != 0:
-            print("{}: {}".format(key, dict[key]))
+def print_stats(status_codes, total_size):
+    """Print All statistics"""
+    print(f'File size: {total_size}')
+    for key in sorted(status_codes.keys()):
+        if status_codes[key] == 0:
+            continue
+        print(f'{key}: {status_codes[key]}')
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point of implementation"""
+    pattern = (r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) - '
+               r'\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{6})\] "GET '
+               r'\/projects\/260 HTTP\/1.1" (\d{3}) (\d+)$')
+    line_count = 0
+
+    status_codes = {
+        200: 0,
+        301: 0,
+        400: 0,
+        401: 0,
+        403: 0,
+        404: 0,
+        405: 0,
+        500: 0
+    }
+    total_size = 0
+
     try:
         for line in sys.stdin:
-            split_string = re.split('- |"|"| " " ', str(line))
-            statusC_and_file_s = split_string[-1]
-            if counter != 0 and counter % 10 == 0:
-                printCodes(statusC_counter, file_size)
-            counter = counter + 1
-            try:
-                statusC = int(statusC_and_file_s.split()[0])
-                f_size = int(statusC_and_file_s.split()[1])
-                # print("Status Code {} size {}".format(statusC, f_size))
-                if statusC in statusC_counter:
-                    statusC_counter[statusC] += 1
-                file_size = file_size + f_size
-            except:
-                pass
-        printCodes(statusC_counter, file_size)
+            line_count += 1
+            line_match = re.match(pattern, line)
+            if not line_match:
+                continue
+
+            status_code = int(line_match.group(3))
+            file_size = int(line_match.group(4))
+
+            if status_code in status_codes.keys():
+                status_codes[status_code] += 1
+
+            total_size += file_size
+
+            if line_count % 10 == 0:
+                print_stats(status_codes, total_size)
+
+        print_stats(status_codes, total_size)
+
     except KeyboardInterrupt:
-        printCodes(statusC_counter, file_size)
+        print_stats(status_codes, total_size)
         raise
+
+
+if __name__ == '__main__':
+    main()
