@@ -1,25 +1,37 @@
 #!/usr/bin/node
-const request = require('request');
-const movieId = process.argv[2];
-const options = {
-  url: 'https://swapi-api.hbtn.io/api/films/' + movieId,
-  method: 'GET'
-};
 
-request(options, function (error, response, body) {
-  if (!error) {
-    const characters = JSON.parse(body).characters;
-    printCharacters(characters, 0);
+const request = require('request');
+
+request('https://swapi-api.alx-tools.com/api/films/' + process.argv[2], function (error, response, body) {
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  try {
+    const cast = JSON.parse(body).characters;
+    extract(cast, 0);
+  } catch (parseError) {
+    console.error('Error parsing JSON:', parseError);
   }
 });
 
-function printCharacters (characters, index) {
-  request(characters[index], function (error, response, body) {
-    if (!error) {
+const extract = (cast, i) => {
+  if (i === cast.length) {
+    return;
+  }
+
+  request(cast[i], function (error, response, body) {
+    if (error) {
+      console.error(error);
+      return;
+    }
+
+    try {
       console.log(JSON.parse(body).name);
-      if (index + 1 < characters.length) {
-        printCharacters(characters, index + 1);
-      }
+      extract(cast, i + 1);
+    } catch (parseError) {
+      console.error('Error parsing JSON:', parseError);
     }
   });
 }
