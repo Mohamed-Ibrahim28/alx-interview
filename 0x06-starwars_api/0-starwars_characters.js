@@ -1,37 +1,22 @@
 #!/usr/bin/node
 
-const request = require('request');
+const request = require("request");
+const movieId = process.argv[2];
+const url = `https://swapi-api.alx-tools.com/api/films/${movieId}`;
 
-request('https://swapi-api.alx-tools.com/api/films/' + process.argv[2], function (error, response, body) {
-  if (error) {
-    console.error(error);
-    return;
+request(url, async (err, response, body) => {
+  if (err) {
+    console.log(err);
   }
-
-  try {
-    const cast = JSON.parse(body).characters;
-    extract(cast, 0);
-  } catch (parseError) {
-    console.error('Error parsing JSON:', parseError);
+  for (const characterId of JSON.parse(body).characters) {
+    await new Promise((resolve, reject) => {
+      request(characterId, (err, response, body) => {
+        if (err) {
+          reject(err);
+        }
+        console.log(JSON.parse(body).name);
+        resolve();
+      });
+    });
   }
 });
-
-const extract = (cast, i) => {
-  if (i === cast.length) {
-    return;
-  }
-
-  request(cast[i], function (error, response, body) {
-    if (error) {
-      console.error(error);
-      return;
-    }
-
-    try {
-      console.log(JSON.parse(body).name);
-      extract(cast, i + 1);
-    } catch (parseError) {
-      console.error('Error parsing JSON:', parseError);
-    }
-  });
-}
